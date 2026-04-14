@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>MVT Viewer - UCR★STAR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://unpkg.com/maplibre-gl@3.6.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@3.6.0/dist/maplibre-gl.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+    .app { display: flex; height: 100vh; }
+
+    .left-panel {
+      width: 340px;
+      background: #fff;
+      border-right: 1px solid #dadce0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .panel-logo {
+      padding: 28px 20px;
+      text-align: center;
+      border-bottom: 1px solid #e8eaed;
+    }
+
+    .logo-text {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a73e8;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-subtitle {
+      font-size: 12px;
+      color: #5f6368;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .panel-search {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e8eaed;
+      background: #fafbfc;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #dadce0;
+      border-radius: 24px;
+      font-size: 14px;
+      background: #fff;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
+    }
+
+    .dataset-count {
+      padding: 12px 20px;
+      font-size: 13px;
+      color: #5f6368;
+      border-bottom: 1px solid #e8eaed;
+      font-weight: 500;
+    }
+
+    .clear-filters {
+      color: #1a73e8;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .clear-filters:hover { text-decoration: underline; }
+
+    .dataset-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .dataset-item {
+      display: block;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      border-bottom: 1px solid #f6f6f6;
+      font-size: 14px;
+      color: #202124;
+    }
+
+    .dataset-item:hover { background: #f8f9fa; color: #1a73e8; }
+
+    .dataset-item.active {
+      background: #e8f0fe;
+      border-left: 4px solid #4285f4;
+      color: #1a73e8;
+      font-weight: 500;
+      padding-left: 16px;
+    }
+
+    .dataset-detail {
+      padding: 16px 20px;
+      background: #fafbfc;
+      border-top: 1px solid #e8eaed;
+      max-height: 46%;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+
+    .detail-title {
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-label { color: #5f6368; font-weight: 500; flex-shrink: 0; margin-right: 12px; }
+    .detail-value { color: #202124; font-weight: 500; text-align: right; flex: 1; word-break: break-word; }
+
+    .download-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+
+    .download-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      background: #1a73e8;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .download-btn.secondary {
+      background: #fff;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+    }
+
+    .download-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .download-btn.secondary:hover:not(:disabled) { background: #e8f0fe; }
+    .download-btn:disabled { opacity: 0.5; cursor: default; }
+
+    #map { flex: 1; position: relative; }
+
+    .map-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: rgba(255,255,255,0.95);
+      border-radius: 4px;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.15s ease;
+    }
+
+    .zoom-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); transform: translateY(-1px); }
+
+    .style-panel {
+      position: absolute;
+      top: 170px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 260px;
+      max-width: 300px;
+      display: none;
+    }
+
+    .style-panel.visible { display: block; }
+
+    .style-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .style-close { cursor: pointer; font-size: 20px; color: #5f6368; line-height: 1; }
+    .style-close:hover { color: #202124; }
+
+    .style-section { margin-bottom: 12px; }
+
+    .style-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #5f6368;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .style-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+    }
+
+    .style-select:focus { border-color: #4285f4; box-shadow: 0 0 0 2px rgba(66,133,244,0.2); }
+
+    .style-row { display: flex; gap: 8px; }
+    .style-row .style-section { flex: 1; margin-bottom: 0; }
+
+    .apply-style-btn {
+      width: 100%;
+      padding: 10px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 4px;
+    }
+
+    .apply-style-btn:hover { background: #1a73e8; }
+
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      display: none;
+      max-width: 200px;
+    }
+
+    .legend.visible { display: block; }
+
+    .legend-title { font-size: 12px; font-weight: 600; color: #202124; margin-bottom: 8px; }
+
+    .legend-item { display: flex; align-items: center; margin-bottom: 6px; font-size: 11px; color: #5f6368; }
+
+    .legend-color { width: 20px; height: 12px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
+
+    .maplibregl-popup-content {
+      border-radius: 8px !important;
+      padding: 0 !important;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      min-width: 200px;
+      max-width: 320px;
+    }
+
+    .popup-header { background: #1a73e8; color: #fff; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+
+    .popup-body { padding: 10px 12px; max-height: 280px; overflow-y: auto; }
+
+    .popup-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+    .popup-row:last-child { border-bottom: none; }
+    .popup-key { color: #5f6368; font-weight: 500; flex-shrink: 0; min-width: 80px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .popup-val { color: #202124; word-break: break-word; flex: 1; }
+
+    .dataset-list::-webkit-scrollbar { width: 6px; }
+    .dataset-list::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 3px; }
+
+    body.dark { background: #0f172a; color: #e5e7eb; }
+    body.dark .left-panel { background: #111827; border-right-color: #1f2937; }
+    body.dark .panel-logo { border-bottom-color: #1f2937; }
+    body.dark .logo-text { color: #60a5fa; }
+    body.dark .logo-subtitle { color: #9ca3af; }
+    body.dark .panel-search { background: #020617; border-bottom-color: #1f2937; }
+    body.dark .search-input { background: #020617; border-color: #374151; color: #e5e7eb; }
+    body.dark .search-input::placeholder { color: #6b7280; }
+    body.dark .dataset-count { border-bottom-color: #1f2937; color: #9ca3af; }
+    body.dark .clear-filters { color: #93c5fd; }
+    body.dark .dataset-list { background: #111827; }
+    body.dark .dataset-item { border-bottom-color: #1f2937; color: #e5e7eb; }
+    body.dark .dataset-item:hover { background: #1f2937; color: #93c5fd; }
+    body.dark .dataset-item.active { background: #1f2937; border-left-color: #3b82f6; color: #bfdbfe; }
+    body.dark .dataset-detail { background: #020617; border-top-color: #1f2937; }
+    body.dark .detail-label { color: #9ca3af; }
+    body.dark .detail-value { color: #e5e7eb; }
+    body.dark .zoom-btn { background: rgba(15,23,42,0.95); color: #e5e7eb; }
+    body.dark .download-btn { background: #3b82f6; }
+    body.dark .download-btn.secondary { background: #1f2937; color: #93c5fd; border-color: #374151; }
+    body.dark .download-btn.secondary:hover:not(:disabled) { background: #374151; }
+    body.dark .style-panel, body.dark .legend { background: rgba(17,24,39,0.98); }
+    body.dark .style-header, body.dark .legend-title { color: #e5e7eb; }
+    body.dark .style-label { color: #9ca3af; }
+    body.dark .style-select { background: #020617; border-color: #374151; color: #e5e7eb; }
+    body.dark .legend-item { color: #9ca3af; }
+    body.dark .popup-header { background: #2563eb; }
+    body.dark .maplibregl-popup-content { background: #1f2937 !important; }
+    body.dark .popup-key { color: #9ca3af; }
+    body.dark .popup-val { color: #e5e7eb; }
+    body.dark .popup-row { border-bottom-color: #374151; }
+
+    .theme-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover { transform: scale(1.05); }
+    body.dark .theme-toggle { background: rgba(17,24,39,0.95); color: #e5e7eb; }
+
+    .goto-box {
+      position: absolute;
+      top: 20px;
+      right: 90px;
+      z-index: 1000;
+      width: 260px;
+      height: 44px;
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      border: 1px solid rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    .goto-input {
+      flex: 1;
+      padding: 0 18px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      outline: none;
+      height: 100%;
+      color: #202124;
+    }
+
+    .goto-input::placeholder { color: #9aa0a6; }
+
+    .goto-btn {
+      width: 56px;
+      height: 44px;
+      border: none;
+      background: #4285f4;
+      color: white;
+      border-radius: 0 22px 22px 0;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .goto-btn:hover { background: #1a73e8; }
+
+    body.dark .goto-box { background: rgba(17,24,39,0.98); border-color: rgba(255,255,255,0.15); }
+    body.dark .goto-input { color: #e5e7eb; }
+    body.dark .goto-btn { background: #3b82f6; }
+
+    @media (max-width: 768px) {
+      .left-panel { width: 100%; position: absolute; z-index: 1001; transform: translateX(-100%); }
+      .left-panel.open { transform: translateX(0); }
+      .goto-box { top: 80px; right: 20px; left: 20px; width: auto; }
+      .style-panel { left: 10px; right: 10px; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="left-panel">
+    <div class="panel-logo">
+      <div class="logo-text">UCR★STAR</div>
+      <div class="logo-subtitle">Spatial Data Viewer</div>
+    </div>
+
+    <div class="panel-search">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search datasets...">
+    </div>
+
+    <div class="dataset-count">
+      <span id="datasetCount">0</span> Datasets
+      <span class="clear-filters" onclick="clearFilters()" style="margin-left:8px;">Clear filters</span>
+    </div>
+
+    <div class="dataset-list" id="datasetList">
+      <div style="padding:40px 20px;text-align:center;color:#9aa0a6;">Loading datasets...</div>
+    </div>
+
+    <div class="dataset-detail">
+      <div class="download-btns">
+        <button class="download-btn" id="downloadAllBtn" disabled onclick="downloadDataset('all')">⬇ Download All</button>
+        <button class="download-btn secondary" id="downloadViewBtn" disabled onclick="downloadDataset('viewport')">⬇ Current View</button>
+      </div>
+
+      <div class="detail-title" id="detailTitle">Select a dataset</div>
+
+      <div class="detail-row">
+        <span class="detail-label">Size:</span>
+        <span class="detail-value" id="detailSize">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Records:</span>
+        <span class="detail-value" id="detailRecords">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Geometry:</span>
+        <span class="detail-value" id="detailGeometry">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="map">
+    <div class="style-panel" id="stylePanel">
+      <div class="style-header">
+        🎨 Styling Options
+        <span class="style-close" onclick="toggleStylePanel()">×</span>
+      </div>
+
+      <div class="style-section">
+        <label class="style-label">Label attribute</label>
+        <select class="style-select" id="labelSelect">
+          <option value="">No labels</option>
+        </select>
+      </div>
+
+      <div class="style-section">
+        <label class="style-label">Color by attribute</label>
+        <select class="style-select" id="colorAttrSelect">
+          <option value="">Default color</option>
+        </select>
+      </div>
+
+      <div class="style-row">
+        <div class="style-section">
+          <label class="style-label">Visualization</label>
+          <select class="style-select" id="vizType">
+            <option value="graduated">Graduated</option>
+            <option value="categorical">Categorical</option>
+          </select>
+        </div>
+        <div class="style-section">
+          <label class="style-label">Color scheme</label>
+          <select class="style-select" id="colorScheme">
+            <option value="blues">Blues</option>
+            <option value="reds">Reds</option>
+            <option value="greens">Greens</option>
+            <option value="viridis">Viridis</option>
+            <option value="rainbow">Rainbow</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="apply-style-btn" onclick="applyStyle()">Apply Style</button>
+    </div>
+
+    <div class="legend" id="legend">
+      <div class="legend-title" id="legendTitle">Legend</div>
+      <div id="legendContent"></div>
+    </div>
+
+    <div class="goto-box">
+      <input type="text" class="goto-input" id="gotoInput" placeholder="Lat, Lng or place name" autocomplete="off">
+      <button class="goto-btn" onclick="goToLocation()">Go</button>
+    </div>
+
+    <div class="map-controls">
+      <button class="zoom-btn" onclick="map?.zoomIn()" title="Zoom In">+</button>
+      <button class="zoom-btn" onclick="map?.zoomOut()" title="Zoom Out">−</button>
+      <button class="zoom-btn" onclick="toggleStylePanel()" title="Styling">🎨</button>
+    </div>
+  </div>
+</div>
+
+<button class="theme-toggle" id="darkToggle" title="Toggle Dark Mode">🌙</button>
+
+<script>
+let map = null;
+let currentDataset = null;
+let allDatasets = [];
+let currentAttributes = [];
+let activePopup = null;
+
+const METADATA = {
+  'OSM2015/all_objects': { size: '91.6 GB', records: '264 M', geometry: 'MIXED' },
+  'TIGER2018/COUNTY': { size: '2.3 GB', records: '3,142', geometry: 'POLYGON' },
+  'TIGER2018/POINTLM': { size: '1.8 GB', records: '100 K', geometry: 'POINT' },
+  'TIGER2018/ROADS': { size: '45 GB', records: '22 M', geometry: 'LINESTRING' }
+};
+
+const RAMPS = {
+  blues: ['#eff3ff','#bdd7e7','#6baed6','#3182bd','#08519c'],
+  reds: ['#fee5d9','#fcae91','#fb6a4a','#de2d26','#a50f15'],
+  greens: ['#e5f5e0','#a1d99b','#74c476','#31a354','#006d2c'],
+  viridis: ['#440154','#414487','#2a788e','#22a884','#7ad151'],
+  rainbow: ['#440154','#3b528b','#21918c','#5ec962','#fde725']
+};
+
+async function loadDatasets() {
+  try {
+    const res = await fetch('/api/datasets');
+    const data = await res.json();
+    allDatasets = data.datasets || [];
+  } catch (e) {
+    allDatasets = Object.keys(METADATA);
+  }
+  document.getElementById('datasetCount').textContent = allDatasets.length;
+  renderDatasetList();
+}
+
+function renderDatasetList(filter = '') {
+  const el = document.getElementById('datasetList');
+  const filtered = allDatasets.filter(d => d.toLowerCase().includes(filter.toLowerCase()));
+  if (!filtered.length) {
+    el.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#9aa0a6;">No datasets found</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(d =>
+    `<div class="dataset-item ${d === currentDataset ? 'active' : ''}" onclick="selectDataset('${d}')">${d}</div>`
+  ).join('');
+}
+
+async function selectDataset(name) {
+  currentDataset = name;
+  renderDatasetList(document.getElementById('searchInput').value);
+  updateDetailPanel();
+  await loadAttributes(name);
+  populateStyleDropdowns();
+  loadDatasetOnMap();
+  saveUrlState();
+}
+
+async function loadAttributes(dataset) {
+  try {
+    const res = await fetch(`/api/datasets/${encodeURIComponent(dataset)}/stats`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    currentAttributes = (data.attributes || []).filter(a => a.name !== 'geometry');
+  } catch (e) {
+    currentAttributes = [];
+  }
+}
+
+function updateDetailPanel() {
+  const hasDs = !!currentDataset;
+  document.getElementById('downloadAllBtn').disabled = !hasDs;
+  document.getElementById('downloadViewBtn').disabled = !hasDs;
+
+  if (!hasDs) {
+    document.getElementById('detailTitle').textContent = 'Select a dataset';
+    document.getElementById('detailSize').textContent = '-';
+    document.getElementById('detailRecords').textContent = '-';
+    document.getElementById('detailGeometry').textContent = '-';
+    return;
+  }
+
+  const meta = METADATA[currentDataset] || { size: '?', records: '?', geometry: guessGeom(currentDataset) };
+  document.getElementById('detailTitle').textContent = currentDataset;
+  document.getElementById('detailSize').textContent = meta.size;
+  document.getElementById('detailRecords').textContent = meta.records;
+  document.getElementById('detailGeometry').textContent = meta.geometry;
+}
+
+function guessGeom(name) {
+  if (name.includes('POINT')) return 'POINT';
+  if (name.includes('ROAD') || name.includes('EDGE')) return 'LINESTRING';
+  return 'POLYGON';
+}
+
+function clearFilters() {
+  currentDataset = null;
+  currentAttributes = [];
+  document.getElementById('searchInput').value = '';
+  window.history.replaceState({}, '', window.location.pathname);
+  renderDatasetList();
+  updateDetailPanel();
+  populateStyleDropdowns();
+  hideLegend();
+  loadDatasetOnMap();
+}
+
+function populateStyleDropdowns() {
+  const labelSel = document.getElementById('labelSelect');
+  const colorSel = document.getElementById('colorAttrSelect');
+  labelSel.innerHTML = '<option value="">No labels</option>';
+  colorSel.innerHTML = '<option value="">Default color</option>';
+  currentAttributes.forEach(a => {
+    labelSel.innerHTML += `<option value="${a.name}">${a.name}</option>`;
+    colorSel.innerHTML += `<option value="${a.name}">${a.name}</option>`;
+  });
+}
+
+function toggleStylePanel() {
+  if (!currentDataset) { alert('Select a dataset first'); return; }
+  document.getElementById('stylePanel').classList.toggle('visible');
+}
+
+function initMap(center = [-98, 39], zoom = 4) {
+  if (map) { map.remove(); map = null; }
+  map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      sources: {
+        osm: {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© OpenStreetMap contributors'
+        }
+      },
+      layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+    },
+    center, zoom
+  });
+  map.on('moveend', saveUrlState);
+  map.on('zoomend', saveUrlState);
+}
+
+function loadDatasetOnMap() {
+  if (!map) return;
+
+  ['ds-fill','ds-outline','ds-points','ds-lines'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  if (map.getSource('dataset')) map.removeSource('dataset');
+  if (map.getLayer('ds-labels')) map.removeLayer('ds-labels');
+  hideLegend();
+
+  if (!currentDataset) return;
+
+  map.addSource('dataset', {
+    type: 'vector',
+    tiles: [`http://127.0.0.1:5000/${currentDataset}/{z}/{x}/{y}.mvt`],
+    minzoom: 0,
+    maxzoom: 14
+  });
+
+  map.addLayer({
+    id: 'ds-fill',
+    type: 'fill',
+    source: 'dataset',
+    'source-layer': 'layer0',
+    filter: ['in', ['geometry-type'], ['literal', ['Polygon','MultiPolygon']]],
+    paint: { 'fill-color': '#4285f4', 'fill-opacity': 0.5 }
+  });
+
+  map.addLayer({
+    id: 'ds-outline',
+    type: 'line',
+    source: 'dataset',
+    'source-layer': 'layer0',
+    filter: ['in', ['geometry-type'], ['literal', ['Polygon','MultiPolygon']]],
+    paint: { 'line-color': '#1a73e8', 'line-width': 1 }
+  });
+
+  map.addLayer({
+    id: 'ds-points',
+    type: 'circle',
+    source: 'dataset',
+    'source-layer': 'layer0',
+    filter: ['==', ['geometry-type'], 'Point'],
+    paint: { 'circle-radius': 5, 'circle-color': '#ea4335', 'circle-stroke-width': 1, 'circle-stroke-color': '#fff' }
+  });
+
+  map.addLayer({
+    id: 'ds-lines',
+    type: 'line',
+    source: 'dataset',
+    'source-layer': 'layer0',
+    filter: ['in', ['geometry-type'], ['literal', ['LineString','MultiLineString']]],
+    paint: { 'line-color': '#34a853', 'line-width': 2 }
+  });
+
+  const clickable = ['ds-fill','ds-points','ds-lines'];
+  clickable.forEach(layer => {
+    map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
+  });
+
+  map.on('click', e => {
+    const features = map.queryRenderedFeatures(e.point, { layers: clickable });
+    if (!features.length) return;
+
+    const props = Object.entries(features[0].properties)
+      .filter(([k]) => k !== 'geometry')
+      .slice(0, 25);
+
+    if (!props.length) return;
+
+    const rows = props.map(([k, v]) =>
+      `<div class="popup-row">
+        <span class="popup-key" title="${k}">${k}</span>
+        <span class="popup-val">${v ?? '<em style="opacity:.5">null</em>'}</span>
+      </div>`
+    ).join('');
+
+    if (activePopup) activePopup.remove();
+    activePopup = new maplibregl.Popup({ maxWidth: '340px', closeButton: true })
+      .setLngLat(e.lngLat)
+      .setHTML(`<div class="popup-header">📍 Feature Properties</div><div class="popup-body">${rows}</div>`)
+      .addTo(map);
+  });
+}
+
+function applyStyle() {
+  if (!map || !currentDataset) return;
+
+  const labelAttr = document.getElementById('labelSelect').value;
+  const colorAttr = document.getElementById('colorAttrSelect').value;
+  const viz = document.getElementById('vizType').value;
+  const scheme = document.getElementById('colorScheme').value;
+
+  if (map.getLayer('ds-labels')) map.removeLayer('ds-labels');
+
+  if (labelAttr) {
+    map.addLayer({
+      id: 'ds-labels',
+      type: 'symbol',
+      source: 'dataset',
+      'source-layer': 'layer0',
+      layout: {
+        'text-field': ['get', labelAttr],
+        'text-size': 12,
+        'text-anchor': 'center',
+        'text-max-width': 8,
+        'text-allow-overlap': false
+      },
+      paint: {
+        'text-color': '#202124',
+        'text-halo-color': 'rgba(255,255,255,0.85)',
+        'text-halo-width': 1.5
+      }
+    });
+  }
+
+  if (!colorAttr) {
+    if (map.getLayer('ds-fill')) map.setPaintProperty('ds-fill', 'fill-color', '#4285f4');
+    if (map.getLayer('ds-lines')) map.setPaintProperty('ds-lines', 'line-color', '#34a853');
+    if (map.getLayer('ds-points')) map.setPaintProperty('ds-points', 'circle-color', '#ea4335');
+    hideLegend();
+    return;
+  }
+
+  const attrInfo = currentAttributes.find(a => a.name === colorAttr);
+  const topK = attrInfo?.stats?.top_k || [];
+  const colors = RAMPS[scheme] || RAMPS.blues;
+  let colorExpr, legendItems;
+
+  if (viz === 'categorical') {
+    const cats = topK.slice(0, colors.length).map(t => String(t.value));
+    if (!cats.length) { alert('No category data available for this attribute.'); return; }
+    colorExpr = ['match', ['get', colorAttr]];
+    cats.forEach((c, i) => colorExpr.push(c, colors[i % colors.length]));
+    colorExpr.push('#d3d3d3');
+    legendItems = cats.map((c, i) => ({ label: c, color: colors[i % colors.length] }));
+  } else {
+    const nums = topK.map(t => parseFloat(t.value)).filter(v => !isNaN(v));
+    if (!nums.length) { alert('No numeric data available for this attribute.'); return; }
+    const min = Math.min(...nums), max = Math.max(...nums);
+    if (min === max) { alert('All values are equal – cannot create graduated style.'); return; }
+    const step = (max - min) / (colors.length - 1);
+    colorExpr = ['interpolate', ['linear'], ['to-number', ['get', colorAttr]]];
+    colors.forEach((c, i) => colorExpr.push(min + i * step, c));
+    legendItems = colors.map((c, i) => ({ label: (min + i * step).toFixed(1), color: c }));
+  }
+
+  if (map.getLayer('ds-fill')) map.setPaintProperty('ds-fill', 'fill-color', colorExpr);
+  if (map.getLayer('ds-lines')) map.setPaintProperty('ds-lines', 'line-color', colorExpr);
+  if (map.getLayer('ds-points')) map.setPaintProperty('ds-points', 'circle-color', colorExpr);
+
+  document.getElementById('legendTitle').textContent = colorAttr;
+  document.getElementById('legendContent').innerHTML = legendItems.map(({ color, label }) =>
+    `<div class="legend-item">
+      <div class="legend-color" style="background:${color}"></div>
+      <span>${label}</span>
+    </div>`
+  ).join('');
+  document.getElementById('legend').classList.add('visible');
+}
+
+function hideLegend() {
+  document.getElementById('legend').classList.remove('visible');
+  document.getElementById('legendContent').innerHTML = '';
+}
+
+function saveUrlState() {
+  if (!map) return;
+  const { lat, lng } = map.getCenter();
+  const zoom = map.getZoom().toFixed(2);
+  const search = currentDataset ? `?dataset=${encodeURIComponent(currentDataset)}` : '';
+  const hash = `#center=${lat.toFixed(5)},${lng.toFixed(5)}&zoom=${zoom}`;
+  window.history.replaceState({}, '', search + hash);
+}
+
+function readUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const dataset = params.get('dataset');
+  let center = [-98, 39], zoom = 4;
+
+  const c = hash.get('center');
+  if (c) {
+    const [lat, lng] = c.split(',').map(Number);
+    if (!isNaN(lat) && !isNaN(lng)) center = [lng, lat];
+  }
+  const z = hash.get('zoom');
+  if (z) zoom = parseFloat(z);
+
+  return { dataset, center, zoom };
+}
+
+function goToLocation() {
+  const val = document.getElementById('gotoInput').value.trim();
+  if (!val) return;
+
+  const match = val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+  if (match) {
+    const lat = parseFloat(match[1]), lng = parseFloat(match[2]);
+    if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      map?.flyTo({ center: [lng, lat], zoom: 12 });
+      document.getElementById('gotoInput').value = '';
+      return;
+    }
+  }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data?.length) {
+        map?.flyTo({ center: [parseFloat(data[0].lon), parseFloat(data[0].lat)], zoom: 12 });
+        document.getElementById('gotoInput').value = '';
+      } else {
+        alert('Location not found.');
+      }
+    })
+    .catch(() => alert('Search error.'));
+}
+
+function downloadDataset(mode) {
+  if (!currentDataset) return;
+  let url = `/datasets/${encodeURIComponent(currentDataset)}/features.geojson`;
+  if (mode === 'viewport' && map) {
+    const b = map.getBounds();
+    url += `?mbr=${b.getWest().toFixed(6)},${b.getSouth().toFixed(6)},${b.getEast().toFixed(6)},${b.getNorth().toFixed(6)}`;
+  }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentDataset.replace(/\//g,'_')}_${mode}.geojson`;
+  a.click();
+}
+
+document.getElementById('searchInput').addEventListener('input', e => renderDatasetList(e.target.value));
+document.getElementById('gotoInput').addEventListener('keypress', e => { if (e.key === 'Enter') goToLocation(); });
+
+const darkToggle = document.getElementById('darkToggle');
+if (localStorage.getItem('ucrstar-dark') === 'on') {
+  document.body.classList.add('dark');
+  darkToggle.textContent = '☀️';
+}
+darkToggle.addEventListener('click', () => {
+  const isDark = document.body.classList.toggle('dark');
+  darkToggle.textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('ucrstar-dark', isDark ? 'on' : 'off');
+});
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const { dataset, center, zoom } = readUrlState();
+  initMap(center, zoom);
+  await loadDatasets();
+  if (dataset) {
+    currentDataset = dataset;
+    updateDetailPanel();
+    await loadAttributes(dataset);
+    populateStyleDropdowns();
+    loadDatasetOnMap();
+  }
+});
+
+window.selectDataset = selectDataset;
+window.clearFilters = clearFilters;
+window.toggleStylePanel = toggleStylePanel;
+window.applyStyle = applyStyle;
+window.downloadDataset = downloadDataset;
+window.goToLocation = goToLocation;
+</script>
+</body>
+</html>
