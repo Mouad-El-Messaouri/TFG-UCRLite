@@ -1,7 +1,5 @@
-/* ── FONTS ─────────────────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-/* ── VARIABLES ─────────────────────────────────────────────────────────────── */
 :root {
   --bg-base:        #080c10;
   --bg-panel:       #0d1117;
@@ -62,7 +60,6 @@ body:not(.dark) {
   --shadow-accent:  0 0 20px rgba(0,119,204,0.12);
 }
 
-/* ── RESET & BASE ──────────────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
@@ -73,10 +70,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── LAYOUT ────────────────────────────────────────────────────────────────── */
 .app { display: flex; height: 100vh; overflow: hidden; }
 
-/* ── LEFT PANEL ────────────────────────────────────────────────────────────── */
 .left-panel {
   width: 300px;
   min-width: 300px;
@@ -106,7 +101,6 @@ html, body {
   z-index: 0;
 }
 
-/* ── LOGO ──────────────────────────────────────────────────────────────────── */
 .panel-logo {
   padding: 24px 20px 20px;
   border-bottom: 1px solid var(--border-subtle);
@@ -142,7 +136,6 @@ html, body {
   margin-top: 4px;
 }
 
-/* ── SEARCH ────────────────────────────────────────────────────────────────── */
 .panel-search {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
@@ -174,7 +167,6 @@ html, body {
 
 .search-input::placeholder { color: var(--text-muted); }
 
-/* ── DATASET COUNT ─────────────────────────────────────────────────────────── */
 .dataset-count {
   padding: 8px 16px;
   font-family: var(--font-mono);
@@ -207,7 +199,6 @@ html, body {
 }
 .clear-filters:hover { color: var(--accent); }
 
-/* ── DATASET LIST ──────────────────────────────────────────────────────────── */
 .dataset-list {
   flex: 1;
   overflow-y: auto;
@@ -258,7 +249,6 @@ html, body {
   opacity: 0.6;
 }
 
-/* ── DATASET DETAIL ────────────────────────────────────────────────────────── */
 .dataset-detail {
   padding: 14px 16px;
   background: var(--bg-elevated);
@@ -321,7 +311,6 @@ html, body {
   color: var(--text-secondary);
 }
 
-/* ── DOWNLOAD BUTTONS ──────────────────────────────────────────────────────── */
 .download-btns {
   display: flex;
   gap: 6px;
@@ -372,10 +361,8 @@ html, body {
   transform: none;
 }
 
-/* ── MAP ───────────────────────────────────────────────────────────────────── */
 #map { flex: 1; position: relative; }
 
-/* ── MAP CONTROLS ──────────────────────────────────────────────────────────── */
 .map-controls {
   position: absolute;
   top: 16px;
@@ -413,7 +400,6 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* ── STYLE PANEL ───────────────────────────────────────────────────────────── */
 .style-panel {
   position: absolute;
   top: 130px;
@@ -533,7 +519,6 @@ input[type="color"].style-input {
   transform: translateY(-1px);
 }
 
-/* ── LEGEND ────────────────────────────────────────────────────────────────── */
 .legend {
   position: absolute;
   bottom: 28px;
@@ -578,7 +563,6 @@ input[type="color"].style-input {
   flex-shrink: 0;
 }
 
-/* ── LABEL CANVAS ──────────────────────────────────────────────────────────── */
 #label-canvas {
   position: absolute;
   top: 0; left: 0;
@@ -587,7 +571,6 @@ input[type="color"].style-input {
   z-index: 10;
 }
 
-/* ── POPUP ─────────────────────────────────────────────────────────────────── */
 .maplibregl-popup-content {
   border-radius: var(--radius-md) !important;
   padding: 0 !important;
@@ -650,7 +633,6 @@ input[type="color"].style-input {
   font-size: 11px;
 }
 
-/* ── GOTO BOX ──────────────────────────────────────────────────────────────── */
 .goto-box {
   position: absolute;
   top: 16px;
@@ -716,7 +698,6 @@ input[type="color"].style-input {
 .goto-btn:hover { background: var(--accent2); }
 .goto-btn:active { transform: scale(0.97); }
 
-/* ── THEME TOGGLE ──────────────────────────────────────────────────────────── */
 .theme-toggle {
   position: fixed;
   bottom: 28px;
@@ -745,7 +726,6 @@ input[type="color"].style-input {
   transform: rotate(20deg);
 }
 
-/* ── AI FAB ────────────────────────────────────────────────────────────────── */
 .ai-fab {
   position: fixed;
   bottom: 76px;
@@ -774,7 +754,6 @@ input[type="color"].style-input {
   transform: translateY(-2px);
 }
 
-/* ── AI PANEL ──────────────────────────────────────────────────────────────── */
 .ai-panel {
   position: fixed;
   bottom: 76px;
@@ -1076,7 +1055,6 @@ input[type="color"].style-input {
 .ai-send-btn:hover { transform: scale(1.1); box-shadow: 0 0 12px rgba(0,229,160,0.4); }
 .ai-send-btn:disabled { opacity: .25; cursor: default; transform: none; }
 
-/* ── DARK MODE (same tokens, already dark by default) ──────────────────────── */
 /* The dark class now just reconfirms vars are in dark mode - tokens handle it */
 body.dark {
   --bg-base:        #080c10;
@@ -1102,7 +1080,6 @@ body.dark {
 .maplibregl-popup .maplibregl-popup-close-button { color: var(--text-secondary); font-size: 16px; padding: 4px 8px; }
 .maplibregl-popup .maplibregl-popup-close-button:hover { color: var(--danger); background: rgba(255,77,109,0.1); }
 
-/* ── RESPONSIVE ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .left-panel {
     width: 280px;
@@ -1120,13 +1097,8 @@ body.dark {
 }
 
 
-
-
-/* ═══════════════════════════════════════════════════════════════════════════
    FASE 5 – Geocodificación: lista de resultados
-   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* El goto-box necesita overflow visible para que el dropdown salga */
 .goto-box {
   overflow: visible !important;
   position: absolute;
@@ -1192,7 +1164,6 @@ body.dark {
   letter-spacing: 0.5px;
 }
 
-/* ── FASE 5: animación de transición al cambiar dataset ── */
 #map.dataset-switching {
   animation: mapFadeSwitch 0.4s ease;
 }
@@ -1203,7 +1174,6 @@ body.dark {
   100% { opacity: 1; }
 }
 
-/* ── FASE 5: mejoras al popup ── */
 .popup-header {
   display: flex;
   justify-content: space-between;
@@ -1232,9 +1202,7 @@ body.dark {
   font-size: 11px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
    FASE 6 – Selector de formato de descarga
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 .download-format-row {
   display: flex;

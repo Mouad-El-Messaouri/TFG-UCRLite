@@ -1,4 +1,3 @@
-// ── GLOBALS ───────────────────────────────────────────────────────────────
 var map, currentDataset = null, allDatasets = [];
 var currentGeometryType = null;
 var currentAttributes   = [];
@@ -18,7 +17,6 @@ var colorSchemeSelect = document.getElementById('colorScheme');
 var legendEl          = document.getElementById('legend');
 var legendContentEl   = document.getElementById('legendContent');
 
-// ── URL STATE ─────────────────────────────────────────────────────────────
 function parseUrlState() {
   var params     = new URLSearchParams(window.location.search);
   var hashParams = new URLSearchParams(window.location.hash.slice(1));
@@ -41,7 +39,6 @@ function updateUrl() {
 
 function scheduleUrlUpdate() { clearTimeout(urlUpdateTimer); urlUpdateTimer=setTimeout(updateUrl,150); }
 
-// ── METADATA ──────────────────────────────────────────────────────────────
 var datasetMetadata = {
   'OSM2015/all_objects': { size:'91.6 GB', records:'264 m', geometry:'GEOMETRYCOLLECTION', desc:'All map objects in OpenStreetMap.' },
   'TIGER2018/COUNTY':   { size:'2.3 GB',  records:'3142',  geometry:'POLYGON',    desc:'US County boundaries from TIGER 2018.' },
@@ -55,7 +52,6 @@ var datasetAttributes = {
   'TIGER2018/ROADS':   ['MTFCC','RTTYP','FULLNAME']
 };
 
-// ── LOAD ATTRIBUTES ───────────────────────────────────────────────────────
 async function loadAttributes(dataset) {
   try {
     var res = await fetch('/api/datasets/'+encodeURIComponent(dataset)+'/stats');
@@ -66,7 +62,6 @@ async function loadAttributes(dataset) {
   } catch(e) { currentAttributes=[]; return false; }
 }
 
-// ── LOAD DATASETS ─────────────────────────────────────────────────────────
 async function loadDatasets() {
   try {
     var res  = await fetch('/api/datasets');
@@ -88,9 +83,7 @@ function renderDatasetList(filter) {
   }).join('');
 }
 
-// ── SELECT DATASET ────────────────────────────────────────────────────────
 async function selectDataset(dataset) {
-  // ── FASE 5: animación de transición al cambiar dataset ──
   var mapEl = document.getElementById('map');
   mapEl.classList.add('dataset-switching');
   setTimeout(function(){ mapEl.classList.remove('dataset-switching'); }, 400);
@@ -103,7 +96,6 @@ async function selectDataset(dataset) {
   await loadMap(); updateUrl();
 }
 
-// ── DETAIL PANEL ──────────────────────────────────────────────────────────
 function updateDetailPanel() {
   var has = !!currentDataset;
   downloadAllBtn.disabled = downloadViewBtn.disabled = !has;
@@ -136,8 +128,6 @@ function clearFilters() {
   renderDatasetList(); updateDetailPanel(); populateAttributeSelect(); populateLabelSelect(); resetLegend(); loadMap();
 }
 
-// ── FASE 6: DESCARGA ──────────────────────────────────────────────────────
-// Soporta múltiples formatos y MBR correcto desde los límites visibles del mapa
 function downloadDataset(mode) {
   if (!currentDataset) return;
   var fmt = (document.getElementById('downloadFormat') || {}).value || 'geojson';
@@ -168,7 +158,6 @@ function downloadDataset(mode) {
   setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2500);
 }
 
-// ── MAP ───────────────────────────────────────────────────────────────────
 async function loadMap(initialCenter, initialZoom) {
   if (activePopup) { activePopup.remove(); activePopup=null; }
   var dc = initialCenter||[-98,39], dz = initialZoom||4;
@@ -211,8 +200,6 @@ function attachMapEvents() {
   map.on('moveend',scheduleUrlUpdate); map.on('zoomend',scheduleUrlUpdate);
 }
 
-// ── CLICK POPUP ───────────────────────────────────────────────────────────
-// FASE 5: popup mejorado con todos los atributos, scroll interno y formato visual limpio
 var CLICKABLE_LAYERS=['fill','points','lines'];
 
 function attachClickHandlers() {
@@ -228,13 +215,11 @@ function attachClickHandlers() {
     if (!features||!features.length) return;
     var props=features[0].properties;
     if (!props||!Object.keys(props).length) return;
-    // Fase 5: mostrar TODOS los atributos (sin límite de 30), excluyendo internos
     var rows=Object.entries(props).filter(function(kv){
       return kv[0]!=='geometry' && kv[0].indexOf('_')!==0;
     });
     if (!rows.length) return;
 
-    // Contador de atributos en la cabecera
     var geomType = features[0].geometry ? features[0].geometry.type : '';
     var headerLabel = geomType ? '📍 ' + geomType : '📍 Feature Properties';
     var countLabel  = rows.length + ' attribute' + (rows.length!==1?'s':'');
@@ -264,7 +249,6 @@ function attachClickHandlers() {
   });
 }
 
-// ── STYLE PANEL ───────────────────────────────────────────────────────────
 function toggleStylePanel() {
   if (!currentDataset){alert('Select a dataset first');return;}
   stylePanelEl.classList.toggle('visible');
@@ -310,11 +294,8 @@ function resetToDefaultStyle() {
 
 function resetLegend() { if (legendEl){legendEl.classList.remove('visible');legendContentEl.innerHTML='';} }
 
-// ── CANVAS LABELS ─────────────────────────────────────────────────────────
 var _labelAttr=null, _labelSize=12, _labelColor='#202124', _labelFrame=null;
 
-// Obtener siempre en tiempo de uso: map.remove() destruye el DOM de #map
-// y recrea el canvas, invalidando cualquier referencia guardada al inicio.
 function _getCanvas(){ return document.getElementById('label-canvas'); }
 function _getCtx(){ var c=_getCanvas(); return c?c.getContext('2d'):null; }
 
@@ -426,10 +407,8 @@ function _detachLabelRenderer(){
   _clearLabels(); _labelAttr=null;
 }
 
-// ── APPLY STYLE ───────────────────────────────────────────────────────────
 function applyStyle(){
   if (!map||!currentDataset) return;
-  // Leer siempre del DOM en tiempo de ejecución, nunca de variables capturadas al inicio
   var attrEl   = document.getElementById('attributeSelect');
   var vizEl    = document.getElementById('vizType');
   var schemeEl = document.getElementById('colorScheme');
@@ -447,7 +426,6 @@ function applyStyle(){
       ? getAttributeStats(attr,{forceCategorical:true})
       : getAttributeStats(attr);
 
-    // Si no hay stats suficientes, construir un rango sintético desde features visibles
     if (!stats || (stats.min===null && (!stats.categories||!stats.categories.length))) {
       stats = _buildSyntheticStats(attr, viz);
     }
@@ -461,7 +439,6 @@ function applyStyle(){
         else if (currentGeometryType==='point')   _applyPointStyle(attr,viz,stats,scheme);
         else if (currentGeometryType==='line')    _applyLineStyle(attr,viz,stats,scheme);
         else {
-          // Tipo desconocido: intentar todas las capas
           if (map.getLayer('fill'))   _applyPolygonStyle(attr,viz,stats,scheme);
           if (map.getLayer('points')) _applyPointStyle(attr,viz,stats,scheme);
           if (map.getLayer('lines'))  _applyLineStyle(attr,viz,stats,scheme);
@@ -472,7 +449,6 @@ function applyStyle(){
   applyLabels(lAttr, lSize, lColor);
 }
 
-// Construye stats sintéticas escaneando las features visibles en el mapa
 function _buildSyntheticStats(attrName, viz){
   if (!map) return null;
   try {
@@ -495,7 +471,6 @@ function _buildSyntheticStats(attrName, viz){
     var forceCat = viz==='categorical' || nums.length < cats.length*0.6;
     if (forceCat) return {min:null, max:null, count:cats.length, categories:cats.slice(0,8)};
     var mn=Math.min.apply(null,nums), mx=Math.max.apply(null,nums);
-    // Si min===max añadir margen para que interpolate no rompa
     if (mn===mx){ mn=mn*0.9||0; mx=mx*1.1||1; }
     return {min:mn, max:mx, count:nums.length, categories:[]};
   } catch(e){ console.error('_buildSyntheticStats:', e); return null; }
@@ -533,12 +508,10 @@ function _applyLineStyle(attr,viz,stats,scheme){
   else {var isCat=viz==='categorical',e=isCat?buildCategoricalExpression(attr,stats,scheme):buildChoroplethExpression(attr,stats,scheme);if(!e)return;map.setPaintProperty('lines','line-color',e);isCat?updateLegendCategorical(attr,stats,scheme):updateLegendChoropleth(attr,stats,scheme);}
 }
 
-// ── STATS ─────────────────────────────────────────────────────────────────
 function getAttributeStats(attrName,opts){
   opts=opts||{}; var fc=opts.forceCategorical||false, attr=null;
   for (var i=0;i<currentAttributes.length;i++){if(currentAttributes[i].name===attrName){attr=currentAttributes[i];break;}}
 
-  // Si tenemos stats del servidor, usarlas
   if (attr&&attr.stats) {
     var stats=attr.stats, topK=stats.top_k||[];
     if (fc) return {min:null,max:null,count:stats.non_null_count!=null?stats.non_null_count:topK.length,categories:topK.map(function(t){return String(t.value);}).slice(0,8)};
@@ -547,7 +520,6 @@ function getAttributeStats(attrName,opts){
     return {min:null,max:null,count:stats.non_null_count!=null?stats.non_null_count:topK.length,categories:topK.map(function(t){return String(t.value);}).slice(0,8)};
   }
 
-  // Fallback: calcular stats desde las features visibles en el mapa
   if (!map) return null;
   try {
     var avail=['fill','points','lines'].filter(function(l){return map.getLayer(l);});
@@ -611,7 +583,6 @@ function updateLegendCategorical(attr,stats,scheme){
   legendEl.classList.add('visible'); legendEl.querySelector('.legend-title').textContent=attr;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────
 searchInput.addEventListener('input',function(e){renderDatasetList(e.target.value);});
 document.getElementById('zoomIn').onclick  = function(){if(map)map.zoomIn();};
 document.getElementById('zoomOut').onclick = function(){if(map)map.zoomOut();};
@@ -626,8 +597,6 @@ window.addEventListener('load', async function(){
   await loadMap(state.center,state.zoom);
 });
 
-// ── FASE 5: GEOCODIFICACIÓN CON LISTA DE RESULTADOS + flyTo ───────────────
-// Usa Nominatim (OpenStreetMap) como en el informe de progreso y el código original
 var gotoInput  = document.getElementById('gotoInput');
 var gotoBtn    = document.getElementById('gotoBtn');
 var gotoResults= document.getElementById('gotoResults'); // nuevo dropdown de resultados
@@ -642,7 +611,6 @@ function _showGeoResults(results) {
   }
   gotoResults.innerHTML = results.slice(0,6).map(function(r, i){
     var label = r.display_name || (r.lat+', '+r.lon);
-    // Recortar etiquetas largas
     if (label.length > 60) label = label.slice(0,57)+'…';
     return '<div class="goto-result-item" data-lat="'+r.lat+'" data-lon="'+r.lon+'" data-label="'+label+'">' +
              '<span class="goto-result-icon">📍</span>' +
@@ -651,7 +619,6 @@ function _showGeoResults(results) {
   }).join('');
   gotoResults.classList.add('visible');
 
-  // Click en un resultado → flyTo + cerrar lista
   gotoResults.querySelectorAll('.goto-result-item').forEach(function(el){
     el.addEventListener('click', function(){
       var lat = parseFloat(el.dataset.lat);
@@ -669,7 +636,6 @@ function goToLocation(){
   var input = gotoInput.value.trim();
   if (!input) return;
 
-  // Coordenadas directas (lat, lng)
   var m = input.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
   if (m){
     var la=parseFloat(m[1]), ln=parseFloat(m[2]);
@@ -681,7 +647,6 @@ function goToLocation(){
     }
   }
 
-  // Búsqueda por nombre de lugar con Nominatim
   var btn = gotoBtn;
   btn.disabled = true;
   btn.textContent = '…';
@@ -692,7 +657,6 @@ function goToLocation(){
     .then(function(data){
       btn.disabled = false; btn.textContent = 'Go';
       if (data && data.length === 1) {
-        // Un solo resultado: ir directamente con flyTo
         if (map) map.flyTo({center:[parseFloat(data[0].lon), parseFloat(data[0].lat)], zoom:12, speed:1.4, curve:1.42});
         gotoInput.value = '';
         if (gotoResults) gotoResults.classList.remove('visible');
@@ -713,14 +677,12 @@ function goToLocation(){
 gotoBtn.addEventListener('click', goToLocation);
 gotoInput.addEventListener('keypress', function(e){ if(e.key==='Enter') goToLocation(); });
 
-// Cerrar la lista de resultados al hacer clic fuera
 document.addEventListener('click', function(e){
   if (!gotoResults) return;
   var box = document.querySelector('.goto-box');
   if (box && !box.contains(e.target)) gotoResults.classList.remove('visible');
 });
 
-// ── DARK MODE ─────────────────────────────────────────────────────────────
 var darkToggle=document.getElementById('darkToggle');
 if (localStorage.getItem('ucrstar-dark-mode')==='on'){document.body.classList.add('dark');darkToggle.innerHTML='☀️';}
 darkToggle.addEventListener('click',function(){
@@ -733,9 +695,6 @@ window.selectDataset=selectDataset; window.clearFilters=clearFilters;
 window.toggleStylePanel=toggleStylePanel; window.applyStyle=applyStyle;
 window.downloadDataset=downloadDataset;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// OLLAMA AI STYLE ASSISTANT
-// ═══════════════════════════════════════════════════════════════════════════
 (function(){
   var OLLAMA  = 'http://localhost:11434';
   var _hist   = [];
@@ -937,7 +896,6 @@ window.downloadDataset=downloadDataset;
     var lAttr  = String(s.labelAttr||'').trim();
     var lBg    = String(s.labelBg||'white').trim();
 
-    // Verificar que el atributo existe (case-insensitive + parcial)
     var attrNames = getAttributeNames();
     var matched = '';
     for (var i=0; i<attrNames.length; i++){
@@ -957,7 +915,6 @@ window.downloadDataset=downloadDataset;
       _pending=null; return;
     }
 
-    // Sincronizar los selects del panel de estilo
     function setSelect(id, value){
       var el=document.getElementById(id); if(!el||!value) return;
       var vLow=value.toLowerCase();
@@ -973,11 +930,9 @@ window.downloadDataset=downloadDataset;
     setSelect('labelSelect',     lAttr);
     setSelect('labelBg',         lBg);
 
-    // Abrir el panel de estilo para que el usuario vea los cambios
     var sp=document.getElementById('stylePanel');
     if (sp && !sp.classList.contains('visible')) sp.classList.add('visible');
 
-    // Calcular stats: primero desde el servidor, luego desde features visibles
     var stats = viz==='categorical'
       ? getAttributeStats(matched, {forceCategorical:true})
       : getAttributeStats(matched);
@@ -990,7 +945,6 @@ window.downloadDataset=downloadDataset;
       _pending=null; return;
     }
 
-    // Aplicar estilo directamente a las capas MapLibre
     try {
       if      (currentGeometryType==='polygon') _applyPolygonStyle(matched,viz,stats,scheme);
       else if (currentGeometryType==='point')   _applyPointStyle(matched,viz,stats,scheme);

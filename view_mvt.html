@@ -32,7 +32,6 @@
           <button class="download-btn" id="downloadAllBtn" disabled onclick="downloadDataset('all')">Download All</button>
           <button class="download-btn secondary" id="downloadViewBtn" disabled onclick="downloadDataset('viewport')">Current View</button>
         </div>
-        <!-- FASE 6: selector de formato de exportación -->
         <div class="download-format-row">
           <span class="detail-label" style="font-size:10px;">Format</span>
           <select id="downloadFormat" class="download-format-select">
@@ -133,13 +132,11 @@
         <div id="legendContent"></div>
       </div>
 
-      <!-- FASE 5: Go to location con dropdown de resultados -->
       <div class="goto-box">
         <div class="goto-input-group">
           <input type="text" class="goto-input" id="gotoInput" placeholder="Lat, Lng or place name" autocomplete="off">
           <button class="goto-btn" id="gotoBtn">Go</button>
         </div>
-        <!-- Lista de resultados de geocodificación -->
         <div class="goto-results" id="gotoResults"></div>
       </div>
 
