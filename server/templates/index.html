@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UCR★STAR - Spatial Data Repository</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      text-align: center;
+      color: white;
+    }
+
+    /* LOGO */
+    .logo {
+      font-size: 64px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      letter-spacing: -2px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .subtitle {
+      font-size: 22px;
+      font-weight: 300;
+      margin-bottom: 16px;
+      opacity: 0.95;
+    }
+
+    .description {
+      font-size: 16px;
+      line-height: 1.6;
+      opacity: 0.85;
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* STATS */
+    .stats {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* BUTTONS */
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 50px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    /* FEATURES */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .feature {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .feature:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    /* FOOTER */
+    .footer {
+      margin-top: 40px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* LOADING */
+    .loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .logo { font-size: 48px; }
+      .subtitle { font-size: 18px; }
+      .stat-number { font-size: 32px; }
+      .features { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LOGO -->
+    <div class="logo">UCR★STAR</div>
+    <div class="subtitle">Spatial Data Repository</div>
+    <div class="description">
+      Explore and visualize over 250 spatial datasets including OpenStreetMap, TIGER, Natural Earth, and more. 
+      Interactive maps powered by vector tiles.
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-number" id="datasetCount">
+          <span class="loading"></span>
+        </div>
+        <div class="stat-label">Datasets</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">1.2 TB</div>
+        <div class="stat-label">Total Size</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">MVT</div>
+        <div class="stat-label">Vector Tiles</div>
+      </div>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+      <a href="view_mvt.html" class="btn btn-primary">
+        🗺️ Explore Map
+      </a>
+      <a href="https://star.cs.ucr.edu/" class="btn btn-secondary" target="_blank">
+        📚 Documentation
+      </a>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🌍</div>
+        <div class="feature-title">Interactive Maps</div>
+        <div class="feature-text">
+          Navigate spatial data with smooth pan and zoom
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Fast Performance</div>
+        <div class="feature-text">
+          Vector tiles for efficient rendering at any scale
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Rich Datasets</div>
+        <div class="feature-text">
+          From OSM to TIGER, explore diverse collections
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      © UCR 2026 | 
+      <a href="https://star.cs.ucr.edu/about.html" target="_blank">About</a> | 
+      <a href="https://github.com/aseldawy/spatialhadoop" target="_blank">GitHub</a>
+    </div>
+  </div>
+
+  <script>
+    async function loadDatasetCount() {
+      try {
+        const res = await fetch('/api/datasets');
+        const data = await res.json();
+        const count = data.datasets ? data.datasets.length : 251;
+        document.getElementById('datasetCount').textContent = count;
+      } catch(e) {
+        document.getElementById('datasetCount').textContent = '251';
+      }
+    }
+
+    loadDatasetCount();
+  </script>
+</body>
+</html>
