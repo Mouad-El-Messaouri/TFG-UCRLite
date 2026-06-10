@@ -666,6 +666,8 @@ function _dispatchStyle(attr, viz, stats, scheme) {
   // Update legend once, after all geometry types have been processed
   if (viz === 'categorical') {
     updateLegendCategorical(attr, stats, scheme);
+  } else if (viz === 'size') {
+    updateLegendSize(attr, stats, info);
   } else {
     updateLegendChoropleth(attr, stats, scheme);
   }
@@ -885,6 +887,31 @@ function hideLegend() {
   legendEl.classList.remove('visible');
   legendContentEl.innerHTML = '';
   legendEl.removeAttribute('data-mode');
+}
+
+function updateLegendSize(attr, stats, layerInfo) {
+  if (!legendEl || !legendContentEl) return;
+  var mn  = isFinite(stats.min) ? stats.min : 0;
+  var mx  = isFinite(stats.max) ? stats.max : 1;
+  var col = (layerInfo && layerInfo.colors) ? layerInfo.colors.fill : '#4285f4';
+  legendContentEl.innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:8px;padding:6px 0;">' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<svg width="26" height="26" style="flex-shrink:0"><circle cx="13" cy="13" r="11" fill="' + col + '" opacity="0.8"/></svg>' +
+        '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">' + fmtNum(mx) + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<svg width="26" height="26" style="flex-shrink:0"><circle cx="13" cy="13" r="6.5" fill="' + col + '" opacity="0.8"/></svg>' +
+        '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">' + fmtNum((mn + mx) / 2) + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<svg width="26" height="26" style="flex-shrink:0"><circle cx="13" cy="13" r="3" fill="' + col + '" opacity="0.8"/></svg>' +
+        '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">' + fmtNum(mn) + '</span>' +
+      '</div>' +
+    '</div>';
+  legendEl.setAttribute('data-mode', 'choropleth');
+  legendEl.classList.add('visible');
+  legendEl.querySelector('.legend-title').textContent = attr + ' (size)';
 }
 
 function updateLegendChoropleth(attr, stats, scheme) {
