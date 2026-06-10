@@ -224,7 +224,7 @@
         <div class="stat-label">Datasets</div>
       </div>
       <div class="stat">
-        <div class="stat-number">1.2 TB</div>
+        <div class="stat-number" id="totalSize"><span class="loading"></span></div>
         <div class="stat-label">Total Size</div>
       </div>
       <div class="stat">
@@ -268,6 +268,14 @@
           From OSM to TIGER, explore diverse collections
         </div>
       </div>
+
+      <div class="feature">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AI Style Assistant</div>
+        <div class="feature-text">
+          Local LLM via Ollama suggests the best attributes and color schemes for your data — 100% private, no cloud
+        </div>
+      </div>
     </div>
 
     <!-- FOOTER -->
@@ -279,18 +287,31 @@
   </div>
 
   <script>
-    async function loadDatasetCount() {
+    function fmtBytes(b) {
+      if (!b || b === 0) return '—';
+      if (b >= 1e12) return (b / 1e12).toFixed(1) + ' TB';
+      if (b >= 1e9)  return (b / 1e9).toFixed(1)  + ' GB';
+      if (b >= 1e6)  return (b / 1e6).toFixed(1)  + ' MB';
+      return (b / 1e3).toFixed(1) + ' KB';
+    }
+
+    async function loadStats() {
       try {
-        const res = await fetch('/api/datasets');
+        const res  = await fetch('/datasets.json');
         const data = await res.json();
-        const count = data.datasets ? data.datasets.length : 251;
-        document.getElementById('datasetCount').textContent = count;
+        const list = data.datasets || [];
+
+        document.getElementById('datasetCount').textContent = list.length;
+
+        const total = list.reduce((sum, d) => sum + (d.size || 0), 0);
+        document.getElementById('totalSize').textContent = fmtBytes(total);
       } catch(e) {
-        document.getElementById('datasetCount').textContent = '251';
+        document.getElementById('datasetCount').textContent = '—';
+        document.getElementById('totalSize').textContent    = '—';
       }
     }
 
-    loadDatasetCount();
+    loadStats();
   </script>
 </body>
 </html>
